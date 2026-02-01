@@ -1,154 +1,168 @@
 ---
 name: agent-docs
-description: Create documentation optimized for AI agent consumption. Use when writing SKILL.md files, README files, API docs, or any documentation that will be read by LLMs in context windows. Helps structure content for RAG retrieval, token efficiency, and chunking.
+description: Create documentation optimized for AI agent consumption. Use when writing SKILL.md files, README files, API docs, or any documentation that will be read by LLMs in context windows. Helps structure content for RAG retrieval, token efficiency, and the Hybrid Context Hierarchy.
 ---
 
 # Agent Docs
 
-Write documentation that AI agents can efficiently consume. Optimized for context windows, RAG retrieval, and chunking.
+Write documentation that AI agents can efficiently consume. Based on Vercel benchmarks and industry standards (AGENTS.md, llms.txt, CLAUDE.md).
+
+## The Hybrid Context Hierarchy
+
+Three-layer architecture for optimal agent performance:
+
+### Layer 1: Constitution (Inline)
+**Always in context.** 2,000–4,000 tokens max.
+
+```markdown
+# AGENTS.md
+> Context: Next.js 16 | Tailwind | Supabase
+
+## 🚨 CRITICAL
+- NO SECRETS in output
+- Use `app/` directory ONLY
+
+## 📚 DOCS INDEX (use read_file)
+- Auth: `docs/auth/llms.txt`
+- DB: `docs/db/schema.md`
+```
+
+**Include:**
+- Security rules, architecture constraints
+- Build/test/lint commands (top for primacy bias)
+- Documentation map (where to find more)
+
+### Layer 2: Reference Library (Local Retrieval)
+**Fetched on demand.** 1K–5K token chunks.
+
+- Framework-specific guides
+- Detailed style guides
+- API schemas
+
+### Layer 3: Research Assistant (External)
+**Gated by allow-lists.** Edge cases only.
+
+- Latest library updates
+- Stack Overflow for obscure errors
+- Third-party llms.txt
+
+## Why This Works
+
+**Vercel Benchmark (2026):**
+| Approach | Pass Rate |
+|----------|-----------|
+| Tool-based retrieval | 53% |
+| Retrieval + prompting | 79% |
+| **Inline AGENTS.md** | **100%** |
+
+**Root cause:** Meta-cognitive failure. Agents don't know what they don't know—they assume training data is sufficient. Inline docs bypass this entirely.
 
 ## Core Principles
 
-### 1. Structure for Chunking
+### 1. Compressed Index > Full Docs
 
-AI retrieval systems split docs at headers. Make each section self-contained:
+An 8KB compressed index outperforms a 40KB full dump.
+
+**Compress to:**
+- File paths (where code lives)
+- Function signatures (names + types only)
+- Negative constraints ("Do NOT use X")
+
+### 2. Structure for Chunking
+
+RAG systems split at headers. Each section must be self-contained:
 
 ```markdown
 ## Database Setup          ← Chunk boundary
 
-Prerequisites: PostgreSQL 14+, Node.js 18+
+Prerequisites: PostgreSQL 14+
 
 1. Create database...
-2. Run migrations...
-
-## API Configuration       ← Chunk boundary
 ```
 
 **Rules:**
-- Each H2/H3 section should make sense in isolation
-- Front-load key info (chunkers often truncate)
-- Use clear, descriptive headers (agents search by header text)
+- Front-load key info (chunkers truncate)
+- Descriptive headers (agents search by header text)
 
-### 2. Inline Over Links
+### 3. Inline Over Links
 
-Agents can't automatically follow external links. Each link = a tool call + more tokens.
+Agents can't autonomously browse. Each link = tool call + latency + potential failure.
 
-| Approach | Tokens on Load | Agent Usefulness |
-|----------|---------------|------------------|
-| Full inline | ~12K | ✅ Complete context |
-| Sparse + links | ~2K | ❌ Must fetch each link |
-| Chunked sections | ~1-3K per chunk | ✅ RAG retrieves relevant parts |
+| Approach | Token Load | Agent Success |
+|----------|------------|---------------|
+| Full inline | ~12K | ✅ High |
+| Links only | ~2K | ❌ Requires fetching |
+| Hybrid | ~4K base | ✅ Best of both |
 
-**Do:** Include the actual information inline
-**Don't:** Say "see OWASP docs for details" without including the relevant details
+### 4. The "Lost in the Middle" Problem
 
-### 3. Token-Efficient Patterns
+LLMs have U-shaped attention:
+- **Strong:** Start of context (primacy)
+- **Strong:** End of context (recency)
+- **Weak:** Middle of context
 
-**Good:**
-```markdown
-## Auth Setup
-Use JWT with RS256. Set `JWT_SECRET` env var.
-```
+**Solution:** Put critical rules at TOP of AGENTS.md. Governance first, details later.
 
-**Bad:**
-```markdown
-## Authentication Setup Guide
-This comprehensive section will walk you through the process of setting up authentication for your application. Authentication is an important security measure that...
-```
+### 5. Signal-to-Noise Ratio
 
-Skip preambles. Agents are smart — they don't need hand-holding.
+Strip everything that isn't essential:
+- No "Welcome to..." preambles
+- No marketing text
+- No changelogs in core docs
 
-### 4. Explicit Over Implicit
+Formats like llms.txt and AGENTS.md mechanically increase SNR.
 
-State assumptions and requirements directly:
+## llms.txt Standard
+
+Machine-readable doc index for agents:
 
 ```markdown
-## Deploy to AWS
+# Project Name
 
-**Requires:** AWS CLI configured, ECR repo created, ECS cluster running
+> One-line project description.
 
-1. Build image: `docker build -t app .`
-2. Push: `docker push $ECR_URI`
+## Authentication
+
+- [Setup](docs/auth/setup.md): Environment vars and init
+- [Server](docs/auth/server.md): Cookie handling
+
+## Database
+
+- [Schema](docs/db/schema.md): Full Prisma schema
 ```
 
-### 5. Examples Beat Explanations
+**Location:** `/llms.txt` at domain root
+**Companion:** `/llms-full.txt` — full concatenated docs, HTML stripped
 
-```markdown
-## Query Syntax
+## Security Considerations
 
-Filter by date:
-`GET /api/events?after=2024-01-01&before=2024-12-31`
+### Inline = Trusted
+AGENTS.md is part of your codebase. Controlled, version-pinned.
 
-Filter by status:
-`GET /api/events?status=active,pending`
-```
+### External = Attack Surface
+- Indirect prompt injection via hidden text
+- SSRF risks if agents can browse freely
+- Dependency on external uptime
 
-One example is worth 100 words of explanation.
+**Mitigation:** Domain allow-lists, human-in-the-loop for external retrieval.
 
-## Document Structure Template
+## Anti-Patterns
 
-```markdown
-# [Tool/Topic Name]
-
-One-line description of what this does.
-
-## Quick Start
-
-Minimal working example. Get something running in <30 seconds.
-
-## Core Concepts
-
-Only if truly necessary. Most agents already know general concepts.
-
-## [Task Category 1]
-
-### Subtask A
-Concrete steps, code examples.
-
-### Subtask B
-More steps, more examples.
-
-## [Task Category 2]
-...
-
-## Troubleshooting
-
-Common errors and fixes. Agents love these.
-```
-
-## Anti-Patterns to Avoid
-
-1. **"See external docs"** — Agents can't browse autonomously
-2. **Walls of prose** — Hard to chunk, agents skip to examples anyway
-3. **Nested link chains** — "See X, which references Y, which links to Z"
-4. **Redundant sections** — "What is [X]?" when the agent already knows
-5. **TOC-only docs** — A table of contents isn't documentation
-
-## When to Link Externally
-
-Only when:
-- Content changes frequently (API versions, release notes)
-- Legal/compliance requires canonical source
-- File is genuinely too large (>50KB) and must be fetched on-demand
-
-Even then, include a summary of key points inline.
+1. **Pasting 50 pages** — triggers "Lost in the Middle"
+2. **"See external docs"** — agents can't browse autonomously
+3. **Generic advice** — "Write clean code" (use specific constraints)
+4. **TOC-only docs** — indexes without content
+5. **Trusting retrieval alone** — 53% vs 100% pass rate
 
 ## Advanced Patterns
 
-For detailed guidance on specific scenarios, see [references/advanced-patterns.md](references/advanced-patterns.md):
-
-- RAG-optimized chunk sizing
-- Multi-framework documentation
-- API documentation templates
-- Troubleshooting section structure
-- Version-specific content handling
+For detailed guidance on RAG optimization, multi-framework docs, and API templates, see [references/advanced-patterns.md](references/advanced-patterns.md).
 
 ## Validation Checklist
 
-Before finalizing docs:
-
-- [ ] Each H2 section is self-contained
-- [ ] No external links without inline summaries
-- [ ] Examples included for every major feature
-- [ ] Prerequisites stated explicitly
-- [ ] No marketing fluff or unnecessary preambles
+- [ ] Critical governance at TOP of doc
+- [ ] Total inline context under 4K tokens
+- [ ] Each H2 section self-contained
+- [ ] No external links without inline summary
+- [ ] Negative constraints explicit ("Do NOT...")
+- [ ] File paths and signatures, not full code
