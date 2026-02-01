@@ -1,11 +1,20 @@
 # Agent Skills Research
 
-Deep research reports on AI agent development best practices, collected via Gemini Deep Research.
+Deep research reports and OpenClaw skills for AI agent development best practices.
 
-## Reports
+## Skills
+
+| Skill | Description | Status |
+|-------|-------------|--------|
+| [agent-docs](skills/agent-docs/) | Create documentation optimized for AI agent consumption | ✅ Ready |
+
+**Install:** Download from `dist/` or copy `skills/agent-docs/` to your OpenClaw skills directory.
+
+## Research Reports
 
 - **AI Agent Skill Development Best Practices** (Jan 30, 2026) - Comprehensive guide to SKILL.md, OpenClaw, MCP, LangChain, Bun/Deno, security
 - **Scalable AI Agent Knowledge Bases** (Jan 30, 2026) - RAG architecture, hierarchical indexing, prompt caching, LanceDB, TypeScript patterns
+- **Token Optimization for Agent Docs** (Jan 31, 2026) — Optimal document structure for AI agent context windows *(pending)*
 
 ## Topics Covered
 
@@ -18,6 +27,7 @@ Deep research reports on AI agent development best practices, collected via Gemi
 - Bun/Deno for CLI skills
 - ClawdHub distribution
 - Security and sandboxing
+- **Documentation patterns for AI consumption**
 
 ---
 
